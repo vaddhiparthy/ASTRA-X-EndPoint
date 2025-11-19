@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ASTRA‑X‑Aggregator</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="header">ASTRA‑X‑Aggregator</header>
+  <div class="container">
+    <div class="tabs">
+      <button id="chatTab" class="tab active">Chat</button>
+      <button id="dataTab" class="tab">Data Browser</button>
+    </div>
+
+    <!-- Chat pane -->
+    <div id="chatPane" class="pane active">
+      <div id="chatStatus" class="status">Checking status…</div>
+      <div id="messages" class="messages"></div>
+      <form id="messageForm" class="input-area">
+        <input id="messageInput" type="text" class="message-input" placeholder="Type your message…" autocomplete="off" />
+        <button type="submit" class="send-button">Send</button>
+      </form>
+    </div>
+
+    <!-- Data browser pane -->
+    <div id="dataPane" class="pane">
+      <form id="queryForm" class="query-form">
+        <label>Start:
+          <input type="datetime-local" id="startTime" required />
+        </label>
+        <label>End:
+          <input type="datetime-local" id="endTime" required />
+        </label>
+        <button type="submit" class="query-button">Fetch</button>
+      </form>
+      <div class="table-wrapper">
+        <table id="dataTable" class="data-table">
+          <thead>
+            <tr><th>Time</th><th>Role</th><th>Source</th><th>Text</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script src="/static/script.js"></script>
+</body>
+</html>
