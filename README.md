@@ -7,13 +7,18 @@ messages coming from different sources are merged into a single conversation.
 
 The project is intentionally broken down into reusable components:
 
-* **Backend** – Powered by FastAPI, it provides endpoints for chat, webhooks,
-  history retrieval and data browsing.  Messages are persisted in a SQLite
-  database with two tables: a **short‑term log** used to build context for
-  inference, and a **medium‑term store** intended for nightly summarisation (not
-  implemented yet).  The server calls a running [Ollama](https://docs.ollama.com/)
-  instance to generate replies and supports arbitrary system prompts via an
-  environment variable.
+* **Backend** – Powered by FastAPI, it provides endpoints for chat,
+  webhooks, history retrieval and data browsing.  Messages are
+  persisted in a SQLite database with two tables: a **short‑term
+  log** used to build context for inference, and a **medium‑term
+  store** intended for nightly summarisation (not implemented yet).
+  The server calls a running [Ollama](https://docs.ollama.com/) instance
+  to generate replies and reads its behaviour and output format from
+  two plain text files under `config/`: `prompt_static.txt`
+  (identity and behaviour) and `prompt_structure.txt` (response
+  structure).  You can override or extend these instructions at
+  runtime via environment variables – see `.env.example` for a list
+  of supported settings.
 * **Frontend** – A single page HTML/JS application with two tabs: a WhatsApp‑like
   dark chat interface and a simple data browser.  The interface polls the backend
   for new messages, displays connection status and allows users to query the

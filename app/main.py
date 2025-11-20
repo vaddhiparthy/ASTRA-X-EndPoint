@@ -51,7 +51,14 @@ async def root_index() -> HTMLResponse:
     """Serve the main HTML page."""
     index_path = os.path.join(static_dir, "index.html")
     with open(index_path, "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+        content = f.read()
+    # Substitute the chatbot name placeholder if present.  The
+    # default header text is used if CHATBOT_NAME is unset.  This
+    # simple string replacement avoids the need for a templating
+    # engine.  Note: this operates on the entire file contents.
+    chat_name = os.getenv("CHATBOT_NAME", "ASTRA‑X‑Aggregator")
+    content = content.replace("{{CHATBOT_NAME}}", chat_name)
+    return HTMLResponse(content=content)
 
 
 @app.get("/health")

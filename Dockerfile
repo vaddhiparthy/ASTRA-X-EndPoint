@@ -12,14 +12,14 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code.  Our source resides under the
-# ``ASTRA-X-Aggregator`` directory in the build context.  Copy the
-# ``app`` and ``static`` folders into the working directory.
-COPY ASTRA-X-Aggregator/app/ app/
-COPY ASTRA-X-Aggregator/static/ static/
+# The source folders live at the root of the build context.  Copy the
+# application and static folders into the working directory.
+COPY app/ app/
+COPY static/ static/
 # Copy configuration and private folders.  These directories contain
 # editable settings and secrets; see config/settings.py for details.
-COPY ASTRA-X-Aggregator/config/ config/
-COPY ASTRA-X-Aggregator/private/ private/
+COPY config/ config/
+COPY private/ private/
 
 # Expose port for FastAPI
 EXPOSE 12000

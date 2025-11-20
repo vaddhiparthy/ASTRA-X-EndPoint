@@ -7,7 +7,12 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header class="header">ASTRA‑X‑Aggregator</header>
+  <!-- Header text is replaced at runtime via the root_index view.  The
+       placeholder {{CHATBOT_NAME}} will be substituted with the
+       value of the CHATBOT_NAME environment variable (see
+       app.main.root_index).  Do not change this marker unless you
+       also update root_index. -->
+  <header class="header">{{CHATBOT_NAME}}</header>
   <div class="container">
     <div class="tabs">
       <button id="chatTab" class="tab active">Chat</button>

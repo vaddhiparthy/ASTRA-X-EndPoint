@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from . import crud
 from .models import Message
+from ..config.settings import get_static_prompt, get_structure_prompt, settings
 
 
 def build_llm_messages(
@@ -60,10 +61,22 @@ def build_llm_messages(
     """
     messages: List[Dict[str, str]] = []
 
-    # System prompt
-    sys_prompt = os.getenv("SYSTEM_PROMPT")
-    if sys_prompt:
-        messages.append({"role": "system", "content": sys_prompt})
+    # Add static and structure prompt instructions.  Each prompt is
+    # inserted as a separate system message.  The order here
+    # corresponds to the desired precedence: static (identity and
+    # behaviour) first, then structure (format guidelines), then any
+    # runtime override defined via environment variables.
+    static_prompt = get_static_prompt()
+    if static_prompt:
+        messages.append({"role": "system", "content": static_prompt})
+    structure_prompt = get_structure_prompt()
+    if structure_prompt:
+        messages.append({"role": "system", "content": structure_prompt})
+    # If a system prompt override is defined (e.g. via SYSTEM_PROMPT),
+    # append it as well.  This makes it easy to override behaviour on
+    # the fly without editing files.
+    if settings.system_prompt_override:
+        messages.append({"role": "system", "content": settings.system_prompt_override})
 
     # Medium‑term summaries
     summaries = crud.get_recent_summaries(db, summary_limit)

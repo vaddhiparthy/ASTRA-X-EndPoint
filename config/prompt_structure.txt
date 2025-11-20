@@ -1,0 +1,1 @@
+When responding, provide a concise summary of the input.  For alerts include the source and status.  For chat questions answer helpfully.  Avoid markdown code fences unless explicitly asked.  Return plain text only.
