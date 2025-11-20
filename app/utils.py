@@ -15,7 +15,8 @@ from sqlalchemy.orm import Session
 
 from . import crud
 from .models import Message
-from ..config.settings import get_static_prompt, get_structure_prompt, settings
+from config.settings import get_static_prompt, get_structure_prompt, settings
+
 
 
 def build_llm_messages(
