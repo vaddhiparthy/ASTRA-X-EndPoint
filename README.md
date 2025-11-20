@@ -69,7 +69,7 @@ The project is intentionally broken down into reusable components:
    python -m app.main
    ```
 
-3. **Open the UI** – Navigate to `http://127.0.0.1:8000` in your browser.  You
+3. **Open the UI** – Navigate to `http://127.0.0.1:12000` in your browser.  You
    should see the chat tab.  Send a message and observe the assistant’s reply.
 
 ## Building and running with Docker
@@ -83,7 +83,7 @@ from the root of the project:
 docker build -t astra-x-aggregator .
 
 # Run the container (replace OLLAMA_MODEL with your installed model)
-docker run -p 8000:8000 --name astra-x-aggregator \
+docker run -p 12000:12000 --name astra-x-aggregator \
   -e OLLAMA_HOST=http://host.docker.internal:11434 \
   -e OLLAMA_MODEL=YOUR_MODEL_NAME \
   -e SYSTEM_PROMPT="You are a helpful home assistant." \
@@ -92,7 +92,7 @@ docker run -p 8000:8000 --name astra-x-aggregator \
 
 On Linux without Docker Desktop you might need to adjust the value of
 `OLLAMA_HOST` or run with `--network=host` so that the container can
-reach your Ollama service.  Once running, open `http://localhost:8000` in
+reach your Ollama service.  Once running, open `http://localhost:12000` in
 your browser.
 
 ## REST API

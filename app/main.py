@@ -27,11 +27,10 @@ from .utils import (
     format_uptime_payload,
 )
 
-
-# ---------------------------------------------------------------------------
-# Configuration via environment variables
-OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
-OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "hola")
+# Pull global settings.  The ``settings`` object encapsulates all
+# environment‑driven configuration such as the LLM provider, hosts,
+# models and system prompt.  See ``config/settings.py`` for details.
+from config.settings import settings
 
 # Create and configure the FastAPI application
 app = FastAPI(title="ASTRA‑X‑Aggregator")
@@ -65,29 +64,70 @@ async def health_check() -> Dict[str, str]:
     return {"status": "ok"}
 
 
-async def call_ollama(messages: List[Dict[str, str]]) -> str:
-    """Invoke the Ollama chat API and return the assistant reply.
+async def call_llm(messages: List[Dict[str, str]]) -> str:
+    """Invoke the configured LLM provider and return the assistant reply.
 
-    This helper constructs the payload, sends it to the configured
-    Ollama host and handles errors consistently.
+    This helper inspects :class:`config.settings.settings` to determine
+    which backend to call.  Supported providers are ``ollama`` (the
+    default) and ``openai``.  All payloads are constructed here so
+    that endpoints remain agnostic of the underlying model API.
+
+    :param messages: A list of dicts with ``role`` and ``content`` keys
+                     following the OpenAI/Ollama chat format.
+    :returns: The assistant response content as a string.
+    :raises HTTPException: If the provider is unsupported or if the
+        underlying API call fails.
     """
-    url = f"{OLLAMA_HOST}/api/chat"
-    payload = {
-        "model": OLLAMA_MODEL,
-        "messages": messages,
-        "stream": False,
-    }
-    async with httpx.AsyncClient(timeout=None) as client:
+    provider = settings.provider.lower()
+    if provider == "ollama":
+        # Build the request for an Ollama chat inference
+        base = settings.ollama_host.rstrip("/")
+        url = f"{base}/api/chat"
+        payload = {
+            "model": settings.ollama_model,
+            "messages": messages,
+            "stream": False,
+        }
+        async with httpx.AsyncClient(timeout=None) as client:
+            try:
+                resp = await client.post(url, json=payload)
+                resp.raise_for_status()
+            except httpx.HTTPError as exc:
+                raise HTTPException(status_code=502, detail=f"Ollama API error: {exc}")
+        data: Dict[str, Any] = resp.json()
+        reply = data.get("message", {}).get("content")
+        if reply is None:
+            raise HTTPException(status_code=500, detail="Ollama API returned no content")
+        return reply
+    if provider == "openai":
+        # Ensure API key is set
+        api_key = settings.openai_api_key
+        if not api_key:
+            raise HTTPException(
+                status_code=500,
+                detail="OPENAI_API_KEY is not set but LLM_PROVIDER is 'openai'",
+            )
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}"}
+        payload = {
+            "model": settings.openai_model,
+            "messages": messages,
+            "stream": False,
+        }
+        async with httpx.AsyncClient(timeout=None) as client:
+            try:
+                resp = await client.post(url, headers=headers, json=payload)
+                resp.raise_for_status()
+            except httpx.HTTPError as exc:
+                raise HTTPException(status_code=502, detail=f"OpenAI API error: {exc}")
+        data = resp.json()
         try:
-            resp = await client.post(url, json=payload)
-            resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise HTTPException(status_code=502, detail=f"Ollama API error: {exc}")
-    data = resp.json()
-    reply = data.get("message", {}).get("content")
-    if reply is None:
-        raise HTTPException(status_code=500, detail="Ollama API returned no content")
-    return reply
+            reply = data["choices"][0]["message"]["content"]
+        except Exception:
+            raise HTTPException(status_code=500, detail="OpenAI API returned unexpected response")
+        return reply
+    # Unsupported provider
+    raise HTTPException(status_code=500, detail=f"Unsupported LLM provider: {settings.provider}")
 
 
 @app.post("/chat")
@@ -115,7 +155,7 @@ async def chat_endpoint(
 
     # Build context and call the model
     messages = build_llm_messages(db, current_text=text, current_role="user")
-    assistant_reply = await call_ollama(messages)
+    assistant_reply = await call_llm(messages)
 
     # Record the assistant reply
     crud.create_message(
@@ -158,7 +198,7 @@ async def uptime_kuma_webhook(
 
     # Build context and call the model (role=system for events)
     messages = build_llm_messages(db, current_text=text, current_role="system")
-    assistant_reply = await call_ollama(messages)
+    assistant_reply = await call_llm(messages)
 
     # Store assistant reply
     crud.create_message(
@@ -199,7 +239,7 @@ async def generic_webhook(
     )
 
     messages = build_llm_messages(db, current_text=text, current_role="system")
-    assistant_reply = await call_ollama(messages)
+    assistant_reply = await call_llm(messages)
     crud.create_message(
         db,
         role="assistant",
