@@ -59,20 +59,23 @@ def get_messages_between(
     return list(db.scalars(stmt))
 
 
-def get_last_n_messages(db: Session, limit: int) -> List[Message]:
-    """Return the last `limit` messages sorted ascending."""
-    if limit <= 0:
-        return []
-    # Subquery to find the cutoff timestamp
+def get_last_n_messages(db: Session, limit: int = 50):
+    # subquery to get last N timestamps
     subq = (
         select(Message.ts)
         .order_by(Message.ts.desc())
         .limit(limit)
         .subquery()
     )
-    stmt = select(Message).where(Message.ts.in_(subq.c.ts)).order_by(Message.ts.asc())
-    return list(db.scalars(stmt))
 
+    # now select *only* rows whose ts is in the subquery
+    stmt = (
+        select(Message)
+        .where(Message.ts.in_(select(subq.c.ts)))
+        .order_by(Message.ts.asc())
+    )
+
+    return list(db.execute(stmt).scalars())
 
 def get_recent_summaries(db: Session, limit: int) -> List[Summary]:
     """Return up to `limit` most recent summaries ordered ascending by time."""

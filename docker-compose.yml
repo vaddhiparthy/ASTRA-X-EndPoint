@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  aggregator:
+    build: .
+    container_name: astra-x-aggregator
+    ports:
+      - "12000:12000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    restart: unless-stopped

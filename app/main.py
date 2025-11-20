@@ -220,18 +220,24 @@ async def generic_webhook(request: Request, db: Session = Depends(get_db)) -> Di
 
 
 @app.get("/history")
-def history(after: Optional[str] = Query(default=None), db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
+def history(
+    after: Optional[str] = Query(default=None, description="ISO timestamp string"),
+    db: Session = Depends(get_db),
+) -> List[Dict[str, Any]]:
+
+    # Fix: handle timestamps ending with 'Z' (JavaScript default)
     if after:
+        clean = after.replace("Z", "")
         try:
-            since_ts = datetime.datetime.fromisoformat(after)
+            since_ts = datetime.datetime.fromisoformat(clean)
         except Exception:
-            raise HTTPException(status_code=400, detail="Invalid 'after'")
+            raise HTTPException(status_code=400, detail="Invalid 'after' timestamp")
         msgs = crud.get_recent_messages(db, since_ts)
+
     else:
         msgs = crud.get_last_n_messages(db, limit=50)
 
     return [m.to_dict() for m in msgs]
-
 
 @app.get("/data")
 def data_browser(
